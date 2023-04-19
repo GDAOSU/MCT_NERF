@@ -1,0 +1,13 @@
+[project]
+name = "mct"
+version = "0.1.0"
+
+dependencies=[]
+
+[tool.setuptools.packages.find]
+include = ["mct"]
+
+[project.entry-points.'nerfstudio.method_configs']
+mct_nerfacto = 'mct.mct_config:mct_method_nerfacto'
+mct_nerfacto_big = 'mct.mct_config:mct_method_nerfacto_big'
+mct_mipnerf = 'mct.mct_config:mct_method_mipnerf'

@@ -39,12 +39,12 @@
       ]
     },
     {
-      "name": "Python: train ngp",
+      "name": "Python: train mct nerfacto",
       "type": "python",
       "request": "launch",
       "program": "scripts/train.py",
       "console": "integratedTerminal",
-      "args": ["instant_ngp"]
+      "args": ["mct_nerfacto","--data=data/dortmund_msp_800/block_center/0"]
     },
     {
       "name": "Python: train ngp nerfstudio",
