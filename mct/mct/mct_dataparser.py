@@ -15,26 +15,27 @@
 """Dortmund dataset parser. Datasets and documentation here: http://phototour.cs.washington.edu/datasets/"""
 from __future__ import annotations
 
+import json
 import math
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Type
+from typing import Any, Dict, List, Optional, Type
 
 import numpy as np
 import torch
 from rich.progress import Console
+from torchtyping import TensorType
 from typing_extensions import Literal
 
+from mct import mct_camera_utils, mct_dataparseroutputs
+from mct.mct_scene_box import SceneBox
 from mct.mct_utils import read_cameras_text, read_images_text
-from nerfstudio.cameras import camera_utils
 from nerfstudio.cameras.cameras import Cameras, CameraType
-from nerfstudio.data.dataparsers.base_dataparser import (
-    DataParser,
-    DataParserConfig,
-    DataparserOutputs,
-)
-from nerfstudio.data.scene_box import SceneBox
+from nerfstudio.configs.config_utils import to_immutable_dict
+from nerfstudio.data.dataparsers.base_dataparser import DataParser, DataParserConfig
+
+#from nerfstudio.data.scene_box import SceneBox
 
 CONSOLE = Console(width=120)
 
@@ -61,7 +62,6 @@ class MCTDataParserConfig(DataParserConfig):
     """Whether to automatically scale the poses to fit in +/- 1 bounding box."""
     center_poses: bool = False
     """Whether to center the poses."""
-
 
 @dataclass
 class MCT(DataParser):
@@ -166,7 +166,7 @@ class MCT(DataParser):
             sampling_xyz_min,
             sampling_xyz_max,
             poses,
-        ) = camera_utils.center_scale_poses_and_compute_frustum(poses, aoi_bbox)
+        ) = mct_camera_utils.center_scale_poses_and_compute_frustum(poses, aoi_bbox)
 
         # make the scene_bbox a little bit larger
         scene_bbox_expand_scale = 2
@@ -219,7 +219,7 @@ class MCT(DataParser):
         assert len(cameras) == len(image_filenames)
         if has_mask:
             mask_filenames = [mask_filenames[i] for i in indices]
-            dataparser_outputs = DataparserOutputs(
+            dataparser_outputs = mct_dataparseroutputs.MCTDataParserOutputs(
                 image_filenames=image_filenames,
                 mask_filenames=mask_filenames,
                 cameras=cameras,
@@ -227,7 +227,7 @@ class MCT(DataParser):
                 sampling_box=sampling_box,
             )
         else:
-            dataparser_outputs = DataparserOutputs(
+            dataparser_outputs = mct_dataparseroutputs.MCTDataParserOutputs(
                 image_filenames=image_filenames, cameras=cameras, scene_box=scene_box, sampling_box=sampling_box
             )
 

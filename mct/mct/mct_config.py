@@ -3,6 +3,7 @@ LERF configuration file.
 """
 
 from mct.mct_dataparser import MCTDataParserConfig
+from mct.mct_nerfacto import MCTNerfactoModelConfig
 from nerfstudio.cameras.camera_optimizers import CameraOptimizerConfig
 from nerfstudio.configs.base_config import ViewerConfig
 from nerfstudio.data.datamanagers.base_datamanager import VanillaDataManagerConfig
@@ -39,7 +40,7 @@ mct_method_nerfacto= MethodSpecification(
                     scheduler=ExponentialDecaySchedulerConfig(lr_final=6e-6, max_steps=200000),
                 ),
             ),
-            model=NerfactoModelConfig(eval_num_rays_per_chunk=1 << 15),
+            model=MCTNerfactoModelConfig(eval_num_rays_per_chunk=1 << 15),
         ),
         optimizers={
             "proposal_networks": {
