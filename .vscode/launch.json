@@ -44,7 +44,7 @@
       "request": "launch",
       "program": "scripts/train.py",
       "console": "integratedTerminal",
-      "args": ["mct_nerfacto","--data=data/dortmund_msp_800/block_center/0"]
+      "args": ["mct_nerfacto","--data=data/dortmund_msp/block_center/0"]
     },
     {
       "name": "Python: train ngp nerfstudio",

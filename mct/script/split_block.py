@@ -1,3 +1,6 @@
+import os
+
+os.environ['KMP_DUPLICATE_LIB_OK']='TRUE'
 import argparse
 import copy
 import glob
@@ -237,8 +240,8 @@ def split_block_projection(in_dir, num_tiles=2, out_dir="", scene_bbox_path=""):
     tiles_bbox = []
     if os.path.exists(scene_bbox_path):
         tile_bbox = list(np.loadtxt(scene_bbox_path))
-        ground_range[0] = ground_height
-        ground_range[1] = ground_height
+        ground_range[0]=tile_bbox[2]
+        ground_range[1]=tile_bbox[5]
         tiles_bbox.append(tile_bbox)
     else:
         tiles_bbox = split_bbox(scene_bbox, num_tiles)
