@@ -49,6 +49,8 @@ class MCTDataParserOutputs(DataparserOutputs):
     """Transform applied by the dataparser."""
     dataparser_scale: float = 1.0
     """Scale applied by the dataparser."""
+    dataparser_shift: TensorType[3] = torch.zeros(0)
+    """Scale applied by the dataparser."""
     def as_dict(self) -> dict:
         """Returns the dataclass as a dictionary."""
         return vars(self)

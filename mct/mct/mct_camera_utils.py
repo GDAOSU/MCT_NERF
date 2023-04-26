@@ -500,6 +500,8 @@ def _compute_bbox_by_cam_frustrm_bounded(heights, widths, Ks, poses, nears, fars
 
 
 def center_scale_poses_and_compute_frustum(poses, bbox=None):
+    transform=torch.eye(4)
+
     scale_factor = 1
     use_bbox = False
     if bbox is not None:
@@ -546,6 +548,14 @@ def center_scale_poses_and_compute_frustum(poses, bbox=None):
         xyz_min *= scale
         xyz_max *= scale
 
+
+        #compute transoform of poses from input space to nerf space
+        transform[0,3]=translation[0]
+        transform[1,3]=translation[1]
+        transform[2,3]=translation[2]
+        transform[0,0]=scale
+        transform[1,1]=scale
+        transform[2,2]=scale
         # bbox = np.array(bbox).astype(np.float64)
         # # center
         # translation = poses[..., :3, 3]
@@ -570,7 +580,7 @@ def center_scale_poses_and_compute_frustum(poses, bbox=None):
         # Cs_max = Cs.amax((0))
         # xyz_min = torch.minimum(sampling_xyz_min, Cs_min)
         # xyz_max = torch.maximum(sampling_xyz_max, Cs_max)
-        return xyz_min, xyz_max, sampling_xyz_min, sampling_xyz_max, poses
+        return xyz_min, xyz_max, sampling_xyz_min, sampling_xyz_max, poses, -translation,scale
     else:
         assert (use_bbox == False, "please give the bbox")
         # center

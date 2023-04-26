@@ -15,7 +15,10 @@ from rich.progress import Console
 
 from nerfstudio.cameras import camera_utils
 from nerfstudio.data.scene_box import SceneBox
-from nerfstudio.data.utils.colmap_utils import read_cameras_text, read_images_text
+from nerfstudio.data.utils.colmap_parsing_utils import (
+    read_cameras_text,
+    read_images_text,
+)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-i", required=True, help="input dir")
@@ -226,6 +229,7 @@ def split_block(in_dir, num_tiles=2, out_dir="", scene_bbox_path=""):
 
 
 def split_block_projection(in_dir, num_tiles=2, out_dir="", scene_bbox_path=""):
+    musk_thresh=15 ## sum of r,g,b
     if out_dir == "":
         out_dir = os.path.join(in_dir, "block")
     if not os.path.exists(out_dir):
@@ -378,6 +382,9 @@ def split_block_projection(in_dir, num_tiles=2, out_dir="", scene_bbox_path=""):
                 ind = np.where(np.array(valid_ids) == img_id)[0][0]
                 aoi_bbox = aoi_bboxs[ind]
                 img_aoi = img_arr[aoi_bbox[2] : aoi_bbox[3], aoi_bbox[0] : aoi_bbox[1], :]
+                img_musk=(np.sum(img_aoi,axis=2)>musk_thresh)*255
+                musk_name=img_names[img_id][:-4]+'_mask'+img_names[img_id][-4:]
+                cv2.imwrite(os.path.join(out_dir, str(block_id), "dense", "images", musk_name), img_musk)
                 cv2.imwrite(os.path.join(out_dir, str(block_id), "dense", "images", img_names[img_id]), img_aoi)
 
 

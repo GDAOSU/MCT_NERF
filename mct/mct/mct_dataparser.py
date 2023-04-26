@@ -77,14 +77,14 @@ class MCT(DataParser):
 
     ## for colmap with k1,k2,k3,p1,p1,near,far params
     def _generate_dataparser_outputs(self, split="train"):
-        # BLOCK_MODE = True
+        #BLOCK_MODE = config.musk_out_black
         ## whole bbox
         # aoi_bbox = [-80, -85, -90, 80, 61, -75]
         ## building1
         # aoi_bbox = [-18, -13, -87, 1, 5, -80]
 
         image_filenames = []
-        has_mask = False
+        has_mask = True
         mask_filenames = []
         poses = []
 
@@ -166,6 +166,8 @@ class MCT(DataParser):
             sampling_xyz_min,
             sampling_xyz_max,
             poses,
+            translation_input2nerf,
+            scale_input2nerf
         ) = mct_camera_utils.center_scale_poses_and_compute_frustum(poses, aoi_bbox)
 
         # make the scene_bbox a little bit larger
@@ -215,20 +217,27 @@ class MCT(DataParser):
 
         cameras = cameras[indices]
         image_filenames = [image_filenames[i] for i in indices]
+        mask_filenames = [mask_filenames[i] for i in indices]
 
         assert len(cameras) == len(image_filenames)
         if has_mask:
-            mask_filenames = [mask_filenames[i] for i in indices]
             dataparser_outputs = mct_dataparseroutputs.MCTDataParserOutputs(
                 image_filenames=image_filenames,
                 mask_filenames=mask_filenames,
                 cameras=cameras,
                 scene_box=scene_box,
                 sampling_box=sampling_box,
+                dataparser_scale=scale_input2nerf,
+                dataparser_shift=translation_input2nerf
             )
         else:
             dataparser_outputs = mct_dataparseroutputs.MCTDataParserOutputs(
-                image_filenames=image_filenames, cameras=cameras, scene_box=scene_box, sampling_box=sampling_box
+                image_filenames=image_filenames, 
+                cameras=cameras, 
+                scene_box=scene_box, 
+                sampling_box=sampling_box,
+                dataparser_scale=scale_input2nerf,
+                dataparser_shift=translation_input2nerf
             )
 
         return dataparser_outputs
