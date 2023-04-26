@@ -39,12 +39,53 @@
       ]
     },
     {
+      "name": "Python: generate block data",
+      "type": "python",
+      "request": "launch",
+      "program": "mct/script/split_block.py",
+      "console": "integratedTerminal",
+      "args": [
+        "-i","data/dortmund_msp",
+        "-o","data/dortmund_msp/block_center/",
+        "-num_split","12",
+        "-scene_bbox","data/dortmund_msp/block_center/scene_bbox.txt"
+      ]
+    },
+    {
       "name": "Python: train mct nerfacto",
       "type": "python",
       "request": "launch",
       "program": "scripts/train.py",
       "console": "integratedTerminal",
       "args": ["mct_nerfacto","--data=data/dortmund_msp/block_center/0"]
+    },
+    {
+      "name": "Python: train mct mipnerf",
+      "type": "python",
+      "request": "launch",
+      "program": "scripts/train.py",
+      "console": "integratedTerminal",
+      "args": ["mct_mipnerf","--data=data/dortmund_msp/block_center/0"]
+    },
+    {
+      "name": "Python: render pointcloud mct nerfacto",
+      "type": "python",
+      "request": "launch",
+      "program": "scripts/exporter.py",
+      "console": "integratedTerminal",
+      "args": ["pointcloud","--load-config","outputs/0/mct_nerfacto/2023-04-24_181212/config.yml","--output-dir","pcd/dortmund_block0_nerfacto/"
+    ]
+    },
+    {
+      "name": "Python: render pointcloud mct mipnerf",
+      "type": "python",
+      "request": "launch",
+      "program": "mct/script/exporter_mct.py",
+      "console": "integratedTerminal",
+      "env":{"CUDA_VISIBLE_DEVICES":"1"},
+      "args": ["pointcloud","--load-config","outputs/0/mct_mipnerf/2023-04-26_004126/config.yml","--output-dir","pcd/dortmund_block0_mipnerf/",
+      "--rgb-output-name","rgb_fine","--depth-output-name","depth_fine","--num-points","5000000"
+    ]
     },
     {
       "name": "Python: train ngp nerfstudio",
