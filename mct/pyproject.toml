@@ -11,3 +11,5 @@ include = ["mct"]
 mct_nerfacto = 'mct.mct_config:mct_method_nerfacto'
 mct_nerfacto_big = 'mct.mct_config:mct_method_nerfacto_big'
 mct_mipnerf = 'mct.mct_config:mct_method_mipnerf'
+mct_neus = 'mct.mct_config:mct_method_neus'
+mct_neusfacto = 'mct.mct_config:mct_method_neusfacto'

@@ -105,8 +105,8 @@ class SurfaceModel(Model):
         """Set the fields and modules."""
         super().populate_modules()
 
-        self.scene_contraction = SceneContraction(order=float("inf"))
-
+        self.scene_contraction = None
+        #self.scene_contraction = SceneContraction(order=float("inf"))
         # Can we also use contraction for sdf?
         # Fields
         self.field = self.config.sdf_field.setup(
@@ -117,7 +117,7 @@ class SurfaceModel(Model):
         )
 
         # Collider
-        self.collider = AABBBoxCollider(self.scene_box, near_plane=0.05)
+        self.collider = AABBBoxCollider(self.scene_box, near_plane=0.00)
 
         # command line near and far has highest priority
         if self.config.overwrite_near_far_plane:
@@ -213,7 +213,7 @@ class SurfaceModel(Model):
         rgb = self.renderer_rgb(rgb=field_outputs[FieldHeadNames.RGB], weights=weights)
         depth = self.renderer_depth(weights=weights, ray_samples=ray_samples)
         # the rendered depth is point-to-point distance and we should convert to depth
-        depth = depth / ray_bundle.metadata["directions_norm"]
+        #depth = depth / ray_bundle.metadata["directions_norm"]
 
         normal = self.renderer_normal(semantics=field_outputs[FieldHeadNames.NORMALS], weights=weights)
         accumulation = self.renderer_accumulation(weights=weights)

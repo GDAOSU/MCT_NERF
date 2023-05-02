@@ -29,7 +29,7 @@ from nerfstudio.cameras.rays import RayBundle
 from nerfstudio.field_components.encodings import NeRFEncoding
 from nerfstudio.field_components.field_heads import FieldHeadNames
 from nerfstudio.fields.vanilla_nerf_field import NeRFField
-from nerfstudio.model_components.losses import MSELoss
+from nerfstudio.model_components.losses import MSELoss, nerfstudio_distortion_loss
 from nerfstudio.model_components.ray_samplers import PDFSampler, UniformSampler
 from nerfstudio.model_components.renderers import (
     AccumulationRenderer,
@@ -136,7 +136,7 @@ class MCTMipNerfModel(Model):
             "accumulation_coarse": accumulation_coarse,
             "accumulation_fine": accumulation_fine,
             "depth_coarse": depth_coarse,
-            "depth_fine": depth_fine,
+            "depth_fine": depth_fine
         }
         return outputs
 
@@ -144,6 +144,8 @@ class MCTMipNerfModel(Model):
         image = batch["image"].to(self.device)
         rgb_loss_coarse = self.rgb_loss(image, outputs["rgb_coarse"])
         rgb_loss_fine = self.rgb_loss(image, outputs["rgb_fine"])
+        # dist_loss_coarse=nerfstudio_distortion_loss(outputs['samples_coarse'],weights=outputs['weights_coarse']).mean()
+        # dist_loss_fine=nerfstudio_distortion_loss(outputs['samples_fine'],weights=outputs['weights_fine']).mean()
         loss_dict = {"rgb_loss_coarse": rgb_loss_coarse, "rgb_loss_fine": rgb_loss_fine}
         loss_dict = misc.scale_dict(loss_dict, self.config.loss_coefficients)
         return loss_dict

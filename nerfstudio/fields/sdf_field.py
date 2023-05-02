@@ -256,9 +256,9 @@ class SDFField(Field):
     def forward_geonetwork(self, inputs: TensorType[..., 3]) -> TensorType[..., "geo-features+1"]:
         """forward the geonetwork"""
         if self.use_grid_feature:
-            positions = self.spatial_distortion(inputs)
-
-            positions = (positions + 1.0) / 2.0
+            #positions = self.spatial_distortion(inputs)
+            positions=inputs
+            #positions = (positions + 1.0) / 2.0
             feature = self.encoding(positions)
         else:
             feature = torch.zeros_like(inputs[:, :1].repeat(1, self.encoding.n_output_dims))

@@ -70,6 +70,10 @@ class ExportPointCloud(Exporter):
     """Number of rays to evaluate per batch. Decrease if you run out of memory."""
     std_ratio: float = 10.0
     """Threshold based on STD of the average distances across the point cloud to remove outliers."""
+    offx: float=0.0
+    offy: float=0.0
+    offz: float=0.0
+
 
     def main(self) -> None:
         """Export point cloud."""
@@ -103,6 +107,8 @@ class ExportPointCloud(Exporter):
         # apply transform from nerf space back to input space
         pcd.scale(1/scale_input2nerf,center=np.zeros(3))
         pcd.translate(shift)
+        offset=np.array([-self.offx,-self.offy,-self.offz])
+        pcd.translate(offset)
 
         CONSOLE.print(f"[bold green]:white_check_mark: Generated {pcd}")
         CONSOLE.print("Saving Point Cloud...")
@@ -343,6 +349,9 @@ class ExportMarchingCubesMesh(Exporter):
     """If using xatlas for unwrapping, the pixels per side of the texture image."""
     target_num_faces: Optional[int] = 50000
     """Target number of faces for the mesh to texture."""
+    offx: float=0.0
+    offy: float=0.0
+    offz: float=0.0
 
     def main(self) -> None:
         """Main function."""
@@ -371,6 +380,15 @@ class ExportMarchingCubesMesh(Exporter):
             isosurface_threshold=self.isosurface_threshold,
             coarse_mask=None,
         )
+
+
+        scale_input2nerf=pipeline.datamanager.train_dataparser_outputs.dataparser_scale.numpy()
+        shift_input2nerf=pipeline.datamanager.train_dataparser_outputs.dataparser_shift.numpy()
+        shift=-shift_input2nerf
+        transform_mat=np.identity(4)
+        transform_mat[:3,:3]*=1/scale_input2nerf
+        transform_mat[:3,3]=shift-np.array([self.offx,self.offy,self.offz])
+        multi_res_mesh.apply_transform(transform_mat)
         filename = self.output_dir / "sdf_marching_cubes_mesh.ply"
         multi_res_mesh.export(filename)
 
