@@ -155,25 +155,24 @@ mct_method_mipnerf= MethodSpecification(
 mct_method_neus = MethodSpecification(
     config=TrainerConfig(
         method_name="mct_neus",
-        steps_per_eval_image=500,
+        steps_per_eval_image=5000,
         steps_per_eval_batch=5000,
-        steps_per_save=5000,
+        steps_per_save=10000,
         steps_per_eval_all_images=1000000,  # set to a very large number so we don't eval with all images
-        max_num_iterations=150000,
+        max_num_iterations=400000,
         mixed_precision=False,
         pipeline=VanillaPipelineConfig(
             datamanager=SDFDataManagerConfig(
                 dataparser=MCTDataParserSDFConfig(),
-                train_num_rays_per_batch=2048,
-                eval_num_rays_per_batch=1024,
+                train_num_rays_per_batch=3000,
+                eval_num_rays_per_batch=256,
                 camera_optimizer=CameraOptimizerConfig(
                     mode="off", optimizer=AdamOptimizerConfig(lr=6e-4, eps=1e-8, weight_decay=1e-2)
                 ),
             ),
             model=MCTNeuSModelConfig(
                 sdf_field=SDFFieldConfig(
-                    num_layers=2,
-                    num_layers_color=2,
+                    encoding_type='None', #just avoid hash encoding
                     inside_outside=False,
                 ),
                 background_model="none",eval_num_rays_per_chunk=1024),
