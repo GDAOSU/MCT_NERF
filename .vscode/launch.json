@@ -45,10 +45,10 @@
       "program": "mct/script/split_block.py",
       "console": "integratedTerminal",
       "args": [
-        "-i","data/dortmund_msp",
-        "-o","data/dortmund_msp/block_center/",
-        "-num_split","12",
-        "-scene_bbox","data/dortmund_msp/block_center/scene_bbox.txt"
+        "-i","data/dortmund_metashape",
+        "-o","data/dortmund_metashape/block_transparent1/",
+        "-num_split","1",
+        "-scene_bbox","data/dortmund_metashape/block_transparent1/scene_bbox.txt"
       ]
     },
     {
@@ -57,7 +57,17 @@
       "request": "launch",
       "program": "scripts/train.py",
       "console": "integratedTerminal",
-      "args": ["mct_nerfacto","--data=data/dortmund_msp/block_center/0"]
+      "env":{"CUDA_VISIBLE_DEVICES":"1"},
+      "args": ["mct_nerfacto","--data=data/dortmund_metashape/block_center_small/0"]
+    },
+    {
+      "name": "Python: train depth-nerfacto scannet",
+      "type": "python",
+      "request": "launch",
+      "program": "scripts/train.py",
+      "console": "integratedTerminal",
+      "env":{"CUDA_VISIBLE_DEVICES":"1"},
+      "args": ["depth-nerfacto","--data=data/scannet/scene0241_01/10views"]
     },
     {
       "name": "Python: train mct mipnerf",
@@ -65,7 +75,38 @@
       "request": "launch",
       "program": "scripts/train.py",
       "console": "integratedTerminal",
-      "args": ["mct_mipnerf","--data=data/dortmund_msp/block_center/0"]
+      "env":{"CUDA_VISIBLE_DEVICES":"0"},
+      "args": ["mct_mipnerf","--data=data/dortmund_metashape/block_center/0"]
+    },
+    {
+      "name": "Python: train mct nerf",
+      "type": "python",
+      "request": "launch",
+      "program": "scripts/train.py",
+      "console": "integratedTerminal",
+      "env":{"CUDA_VISIBLE_DEVICES":"0"},
+      "args": ["mct_mipnerf","--data=data/dortmund_metashape/block_center/0"]
+    },
+    {
+      "name": "Python: train mct neus",
+      "type": "python",
+      "request": "launch",
+      "program": "scripts/train.py",
+      "env":{"CUDA_VISIBLE_DEVICES":"1"},
+      "console": "integratedTerminal",
+      "args": ["mct_neus","--data=data/dortmund_metashape/block_center_small/0","--steps-per-eval-batch", "500",
+       "--steps-per-eval-image", "500"
+    ]
+    },
+    {
+      "name": "Python: train mct neusfacto",
+      "type": "python",
+      "request": "launch",
+      "program": "scripts/train.py",
+      "console": "integratedTerminal",
+      "args": ["mct_neusfacto","--data=data/dortmund_metashape/block_center_small/0","--steps-per-eval-batch", "500",
+       "--steps-per-eval-image", "500"
+    ]
     },
     {
       "name": "Python: render pointcloud mct nerfacto",
@@ -73,18 +114,78 @@
       "request": "launch",
       "program": "scripts/exporter.py",
       "console": "integratedTerminal",
-      "args": ["pointcloud","--load-config","outputs/0/mct_nerfacto/2023-04-24_181212/config.yml","--output-dir","pcd/dortmund_block0_nerfacto/"
+      "env":{"CUDA_VISIBLE_DEVICES":"1"},
+      "args": ["pointcloud","--load-config","outputs/0/mct_nerfacto/2023-05-04_135829/config.yml","--output-dir","pcd/dortmund_block0_small_nerfacto/"
     ]
     },
     {
-      "name": "Python: render pointcloud mct mipnerf",
+      "name": "Python: render pointcloud all mct mipnerf boordaux",
+      "type": "python",
+      "request": "launch",
+      "program": "mct/script/exporter_mct.py",
+      "console": "integratedTerminal",
+      "env":{"CUDA_VISIBLE_DEVICES":"0"},
+      "args": ["pointcloudall","--load-config","outputs/0/mct_mipnerf/2023-05-19_154400/config.yml",
+      "--output-dir","pcd/boordaux_church/",
+      "--rgb-output-name","rgb_fine","--depth-output-name",
+      "depth_fine","--offx","0","--offy","0"
+    ]
+    },
+    {
+      "name": "Python: render pointcloud all mct mipnerf dortmund",
+      "type": "python",
+      "request": "launch",
+      "program": "mct/script/exporter_mct.py",
+      "console": "integratedTerminal",
+      "env":{"CUDA_VISIBLE_DEVICES":"0"},
+      "args": ["pointcloudall","--load-config","outputs/reflectence/mct_mipnerf/2023-05-21_002738/config.yml",
+      "--output-dir","pcd/dortmund_reflectence_new",
+      "--rgb-output-name","rgb_fine","--depth-output-name",
+      "depth_fine","--offx","393500","--offy","5708000"
+    ]
+    },
+    {
+      "name": "Python: render depth mct mipnerf",
       "type": "python",
       "request": "launch",
       "program": "mct/script/exporter_mct.py",
       "console": "integratedTerminal",
       "env":{"CUDA_VISIBLE_DEVICES":"1"},
-      "args": ["pointcloud","--load-config","outputs/0/mct_mipnerf/2023-04-26_004126/config.yml","--output-dir","pcd/dortmund_block0_mipnerf/",
-      "--rgb-output-name","rgb_fine","--depth-output-name","depth_fine","--num-points","5000000"
+      "args": ["depth","--load-config","outputs/0/mct_mipnerf/2023-04-29_122251/config.yml","--output-dir","renders/dortmund_block_center_mipnerf/",
+      "--depth-output-name","depth_fine",
+    ]
+    },
+    {
+      "name": "Python: render pointcloud mct neus",
+      "type": "python",
+      "request": "launch",
+      "program": "mct/script/exporter_mct.py",
+      "console": "integratedTerminal",
+      "env":{"CUDA_VISIBLE_DEVICES":"1"},
+      "args": ["pointcloud","--load-config","outputs/0/mct_neus/2023-05-02_014838/config.yml","--output-dir","pcd/dortmund_block_center_small_neus/",
+      "--rgb-output-name","rgb","--depth-output-name","depth","--num-points","5000000","--offx","393500","--offy","5708000","--num-rays-per-batch","1000","--use_bounding_box","False"
+    ]
+    },
+    {
+      "name": "Python: render mesh mct neus",
+      "type": "python",
+      "request": "launch",
+      "program": "mct/script/exporter_mct.py",
+      "console": "integratedTerminal",
+      "env":{"CUDA_VISIBLE_DEVICES":"1"},
+      "args": ["marching-cubes","--load-config","outputs/0/mct_neus/2023-05-02_203123/config.yml","--output-dir","mesh/dortmund_block_center_small_neus/",
+      "--resolution","512","--offx","393500","--offy","5708000"
+    ]
+    },
+    {
+      "name": "Python: render mesh mct neusfacto",
+      "type": "python",
+      "request": "launch",
+      "program": "mct/script/exporter_mct.py",
+      "console": "integratedTerminal",
+      "env":{"CUDA_VISIBLE_DEVICES":"1"},
+      "args": ["marching-cubes","--load-config","outputs/0/mct_neusfacto/2023-05-02_170327/config.yml","--output-dir","mesh/dortmund_block_center_small_neusfacto/",
+      "--resolution","512","--offx","393500","--offy","5708000"
     ]
     },
     {

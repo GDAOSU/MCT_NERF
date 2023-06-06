@@ -69,7 +69,7 @@ def eval_load_checkpoint(config: TrainerConfig, pipeline: Pipeline) -> Tuple[Pat
 def eval_setup(
     config_path: Path,
     eval_num_rays_per_chunk: Optional[int] = None,
-    test_mode: Literal["test", "val", "inference"] = "test",
+    test_mode: Literal["test", "val", "inference","all"] = "all",
 ) -> Tuple[TrainerConfig, Pipeline, Path, int]:
     """Shared setup for loading a saved pipeline for evaluation.
 

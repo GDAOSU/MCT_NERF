@@ -149,6 +149,7 @@ class SDFField(Field):
 
         growth_factor = np.exp((np.log(config.max_res) - np.log(config.base_res)) / (config.num_levels - 1))
 
+        self.encoding=None
         if self.config.encoding_type == "hash":
             # feature encoding
             self.encoding = tcnn.Encoding(
@@ -166,7 +167,7 @@ class SDFField(Field):
 
         # we concat inputs position ourselves
         self.position_encoding = NeRFEncoding(
-            in_dim=3, num_frequencies=6, min_freq_exp=0.0, max_freq_exp=5.0, include_input=False
+            in_dim=3, num_frequencies=12, min_freq_exp=0.0, max_freq_exp=11.0, include_input=False
         )
 
         self.direction_encoding = NeRFEncoding(
@@ -212,7 +213,9 @@ class SDFField(Field):
         """
         # MLP with geometric initialization
         dims = [self.config.hidden_dim for _ in range(self.config.num_layers)]
-        in_dim = 3 + self.position_encoding.get_out_dim() + self.encoding.n_output_dims
+        if self.encoding is not None:
+            in_dim = 3 + self.position_encoding.get_out_dim() + self.encoding.n_output_dims
+        in_dim = 3 + self.position_encoding.get_out_dim()
         dims = [in_dim] + dims + [1 + self.config.geo_feat_dim]
         self.num_layers = len(dims)
         self.skip_in = [4]
@@ -260,12 +263,14 @@ class SDFField(Field):
             positions=inputs
             #positions = (positions + 1.0) / 2.0
             feature = self.encoding(positions)
+            pe = self.position_encoding(inputs)
+            inputs = torch.cat((inputs, pe, feature), dim=-1)
         else:
-            feature = torch.zeros_like(inputs[:, :1].repeat(1, self.encoding.n_output_dims))
+            #feature = torch.zeros_like(inputs[:, :1].repeat(1, self.encoding.n_output_dims))
+            feature=None
+            pe = self.position_encoding(inputs)
+            inputs = torch.cat((inputs, pe), dim=-1)
 
-        pe = self.position_encoding(inputs)
-
-        inputs = torch.cat((inputs, pe, feature), dim=-1)
 
         # Pass through layers
         outputs = inputs

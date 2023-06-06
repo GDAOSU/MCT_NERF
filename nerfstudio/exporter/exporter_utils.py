@@ -23,7 +23,7 @@ from __future__ import annotations
 import sys
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
-
+from collections import defaultdict
 import numpy as np
 import open3d as o3d
 import pymeshlab
@@ -81,6 +81,177 @@ def get_mesh_from_filename(filename: str, target_num_faces: Optional[int] = None
         ms.meshing_decimation_quadric_edge_collapse(targetfacenum=target_num_faces)
     mesh = ms.current_mesh()
     return get_mesh_from_pymeshlab_mesh(mesh)
+
+
+def generate_depth(
+    pipeline: Pipeline,
+    rgb_output_name: str = "rgb_fine",
+    depth_output_name: str = "depth_fine",
+    output_dir: str="",
+) -> o3d.geometry.PointCloud:
+    """Generate a point cloud from a nerf.
+
+    Args:
+        pipeline: Pipeline to evaluate with.
+        num_points: Number of points to generate. May result in less if outlier removal is used.
+        remove_outliers: Whether to remove outliers.
+        estimate_normals: Whether to estimate normals.
+        rgb_output_name: Name of the RGB output.
+        depth_output_name: Name of the depth output.
+        normal_output_name: Name of the normal output.
+        use_bounding_box: Whether to use a bounding box to sample points.
+        bounding_box_min: Minimum of the bounding box.
+        bounding_box_max: Maximum of the bounding box.
+        std_ratio: Threshold based on STD of the average distances across the point cloud to remove outliers.
+
+    Returns:
+        Point cloud.
+    """
+
+    # pylint: disable=too-many-statements
+    points = []
+    rgbs = []
+    normals = []
+    num_images = len(pipeline.datamanager.fixed_indices_eval_dataloader)
+    from PIL import Image
+    import os
+    import numpy as np
+    import cv2
+    with torch.no_grad():
+        cnt=0
+        for camera_ray_bundle, batch in pipeline.datamanager.fixed_indices_eval_dataloader:
+            # time this the following line
+            height, width = camera_ray_bundle.shape
+            num_rays = height * width
+            outputs = pipeline.model.get_outputs_for_camera_ray_bundle(camera_ray_bundle)
+
+            gt=batch['image'].detach().cpu().numpy()*255
+            gt.astype(np.uint8)
+            gt=cv2.cvtColor(gt,cv2.COLOR_BGR2RGB)
+            rgb = outputs[rgb_output_name].detach().cpu().numpy()*255
+            rgb.astype(np.uint8)
+            rgb=cv2.cvtColor(rgb,cv2.COLOR_BGR2RGB)
+            depth = outputs[depth_output_name].squeeze().detach().cpu().numpy()
+            
+            im = Image.fromarray(depth)
+            im.save(os.path.join(output_dir,str(cnt)+'_depth.tif'))
+            cv2.imwrite(os.path.join(output_dir,str(cnt)+'_rgb.png'),rgb)
+            cv2.imwrite(os.path.join(output_dir,str(cnt)+'_gt.png'),gt)
+            cnt+=1
+
+
+    return depth
+
+def generate_point_cloud_all(
+    pipeline: Pipeline,
+    rgb_output_name: str = "rgb_fine",
+    depth_output_name: str = "depth_fine",
+    output_dir: str="",
+    shiftx: float=0.0,
+    shifty: float=0.0,
+    shiftz: float=0.0,
+    scale:float=0.0
+
+) -> o3d.geometry.PointCloud:
+    """Generate a point cloud from a nerf.
+
+    Args:
+        pipeline: Pipeline to evaluate with.
+        num_points: Number of points to generate. May result in less if outlier removal is used.
+        remove_outliers: Whether to remove outliers.
+        estimate_normals: Whether to estimate normals.
+        rgb_output_name: Name of the RGB output.
+        depth_output_name: Name of the depth output.
+        normal_output_name: Name of the normal output.
+        use_bounding_box: Whether to use a bounding box to sample points.
+        bounding_box_min: Minimum of the bounding box.
+        bounding_box_max: Maximum of the bounding box.
+        std_ratio: Threshold based on STD of the average distances across the point cloud to remove outliers.
+
+    Returns:
+        Point cloud.
+    """
+
+    # pylint: disable=too-many-statements
+    points = []
+    rgbs = []
+    normals = []
+    num_images = len(pipeline.datamanager.fixed_indices_eval_dataloader)
+    from PIL import Image
+    import os
+    import numpy as np
+    import cv2
+    with torch.no_grad():
+        cnt=0
+        for camera_ray_bundle, batch in pipeline.datamanager.fixed_indices_eval_dataloader:
+            # time this the following line
+            height, width = camera_ray_bundle.shape
+            num_rays = height * width
+            num_rays_per_chunk = pipeline.model.config.eval_num_rays_per_chunk
+            #split big image into batches of 500000 pixels
+            for i in range(0, num_rays, 500000):
+                i_next=min(num_rays,i+500000)
+                pt_name=str(cnt)+"_"+str(i)+".ply"
+                pt_path=str(output_dir / pt_name)
+                if os.path.exists(pt_path):
+                    continue
+
+                outputs_lists = defaultdict(list)
+                for j in range(i,i_next,num_rays_per_chunk):
+                    start_idx = j
+                    end_idx = j + num_rays_per_chunk
+                    ray_bundle = camera_ray_bundle.get_row_major_sliced_ray_bundle(start_idx, end_idx)
+                    outputs = pipeline.model(ray_bundle=ray_bundle)
+                    point=ray_bundle.origins+ray_bundle.directions*outputs[depth_output_name]
+                    rgb=outputs[rgb_output_name]
+                    point=point.view(-1,3)
+                    rgb=rgb.view(-1,3)
+                    outputs_lists["points"].append(point)
+                    outputs_lists["rgb"].append(rgb)
+                points=torch.cat(outputs_lists["points"])
+                rgbs=torch.cat(outputs_lists["rgb"])
+                pcd = o3d.geometry.PointCloud()
+                pcd.points = o3d.utility.Vector3dVector(points.double().cpu().numpy())
+                pcd.colors = o3d.utility.Vector3dVector(rgbs.double().cpu().numpy())
+                
+                shift=np.array([shiftx,shifty,shiftz])
+                pcd.scale(scale,center=np.zeros(3))
+                pcd.translate(shift)
+
+                tpcd = o3d.t.geometry.PointCloud.from_legacy(pcd)
+                # The legacy PLY writer converts colors to UInt8,
+                # let us do the same to save space.
+                tpcd.point.colors = (tpcd.point.colors * 255).to(o3d.core.Dtype.UInt8)
+
+                o3d.t.io.write_point_cloud(str(output_dir / pt_name), tpcd)
+            # outputs_lists = defaultdict(list)
+            # outputs = pipeline.model.get_outputs_for_camera_ray_bundle(camera_ray_bundle)
+
+            # rgb = outputs[rgb_output_name]
+            # depth = outputs[depth_output_name]
+            # point = camera_ray_bundle.origins + camera_ray_bundle.directions * depth
+            # point=point.view(-1,3)
+            # rgb=rgb.view(-1,3)
+            # pcd = o3d.geometry.PointCloud()
+            # pcd.points = o3d.utility.Vector3dVector(point.double().cpu().numpy())
+            # pcd.colors = o3d.utility.Vector3dVector(rgb.double().cpu().numpy())
+
+            # shift=np.array([shiftx,shifty,shiftz])
+            # pcd.scale(scale,center=np.zeros(3))
+            # pcd.translate(shift)
+            
+            # tpcd = o3d.t.geometry.PointCloud.from_legacy(pcd)
+            # # The legacy PLY writer converts colors to UInt8,
+            # # let us do the same to save space.
+            # tpcd.point.colors = (tpcd.point.colors * 255).to(o3d.core.Dtype.UInt8)
+            # pt_name=str(cnt)+".ply"
+            # o3d.t.io.write_point_cloud(str(output_dir / pt_name), tpcd)
+            cnt+=1
+
+
+    #return depth
+    return 1
+
 
 
 def generate_point_cloud(

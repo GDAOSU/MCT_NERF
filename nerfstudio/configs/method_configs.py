@@ -39,6 +39,7 @@ from nerfstudio.data.dataparsers.nerfstudio_dataparser import NerfstudioDataPars
 from nerfstudio.data.dataparsers.phototourism_dataparser import (
     PhototourismDataParserConfig,
 )
+from nerfstudio.data.dataparsers.scannet_dataparser import ScanNetDataParserConfig
 from nerfstudio.data.dataparsers.sdfstudio_dataparser import SDFStudioDataParserConfig
 from nerfstudio.data.dataparsers.sitcoms3d_dataparser import Sitcoms3DDataParserConfig
 from nerfstudio.engine.optimizers import AdamOptimizerConfig, RAdamOptimizerConfig
@@ -164,9 +165,15 @@ method_configs["depth-nerfacto"] = TrainerConfig(
     mixed_precision=True,
     pipeline=VanillaPipelineConfig(
         datamanager=DepthDataManagerConfig(
-            dataparser=NerfstudioDataParserConfig(),
+            dataparser=ScanNetDataParserConfig(
+                train_split_fraction=0.8
+            ),
             train_num_rays_per_batch=4096,
             eval_num_rays_per_batch=4096,
+            train_num_images_to_sample_from=100,
+            train_num_times_to_repeat_images=100,
+            eval_num_images_to_sample_from=100,
+            eval_num_times_to_repeat_images=100,
             camera_optimizer=CameraOptimizerConfig(
                 mode="SO3xR3", optimizer=AdamOptimizerConfig(lr=6e-4, eps=1e-8, weight_decay=1e-2)
             ),
@@ -184,7 +191,7 @@ method_configs["depth-nerfacto"] = TrainerConfig(
         },
     },
     viewer=ViewerConfig(num_rays_per_chunk=1 << 15),
-    vis="viewer",
+    vis="tensorboard",
 )
 
 method_configs["volinga"] = TrainerConfig(
