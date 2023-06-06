@@ -51,7 +51,8 @@ mct_method_nerfacto= MethodSpecification(
                     scheduler=ExponentialDecaySchedulerConfig(lr_final=6e-6, max_steps=200000),
                 ),
             ),
-            model=MCTNerfactoModelConfig(eval_num_rays_per_chunk=1 << 15),
+            model=MCTNerfactoModelConfig(eval_num_rays_per_chunk=1 << 15,
+            distortion_loss_mult=0.0),
         ),
         optimizers={
             "proposal_networks": {
@@ -113,9 +114,52 @@ mct_method_nerfacto_big= MethodSpecification(
 mct_method_mipnerf= MethodSpecification(
     config=TrainerConfig(
         method_name="mct_mipnerf",
+        steps_per_eval_batch=500,
+        steps_per_eval_image=1000000,
+        steps_per_save=10000,
+        max_num_iterations=250000,
+        steps_per_eval_all_images=1000000,
+        pipeline=VanillaPipelineConfig(
+            datamanager=VanillaDataManagerConfig(
+                dataparser=MCTDataParserConfig(),
+                train_num_images_to_sample_from=4,
+                train_num_times_to_repeat_images=100,
+                eval_num_images_to_sample_from=4,
+                eval_num_times_to_repeat_images=100,
+                train_num_rays_per_batch=2048,
+                eval_num_rays_per_batch=512,
+                camera_optimizer=CameraOptimizerConfig(
+                    mode="off",
+                    optimizer=AdamOptimizerConfig(lr=6e-4, eps=1e-8, weight_decay=1e-2),
+                    scheduler=ExponentialDecaySchedulerConfig(lr_final=6e-6, max_steps=200000),
+                ),
+            ),
+            model=VanillaModelConfig(
+                _target=MCTMipNerfModel,
+                num_coarse_samples=64,
+                num_importance_samples=128,
+                loss_coefficients={"rgb_loss_coarse": 0.1, "rgb_loss_fine": 1.0,"distortion":0.000},
+                eval_num_rays_per_chunk=512,
+            ),
+        ),
+        optimizers={
+            "fields": {
+                "optimizer": RAdamOptimizerConfig(lr=1e-3, eps=1e-15),
+                "scheduler": None,
+            }
+        },
+        viewer=ViewerConfig(num_rays_per_chunk=1 << 15),
+        vis="tensorboard",
+    ),
+    description='Mipnerf with MCT'
+)
+
+mct_method_nerf= MethodSpecification(
+    config=TrainerConfig(
+        method_name="mct_nerf",
         steps_per_eval_batch=5000,
         steps_per_save=5000,
-        max_num_iterations=200000,
+        max_num_iterations=400000,
         steps_per_eval_all_images=1000000,
         pipeline=VanillaPipelineConfig(
             datamanager=VanillaDataManagerConfig(
@@ -133,19 +177,20 @@ mct_method_mipnerf= MethodSpecification(
                 ),
             ),
             model=VanillaModelConfig(
-                _target=MCTMipNerfModel,
-                loss_coefficients={"rgb_loss_coarse": 0.1, "rgb_loss_fine": 1.0},
-                num_coarse_samples=128,
-                num_importance_samples=128,
+                _target=NeRFModel,
                 eval_num_rays_per_chunk=1024,
             ),
         ),
-        optimizers={
-            "fields": {
-                "optimizer": RAdamOptimizerConfig(lr=5e-4, eps=1e-08),
-                "scheduler": None,
-            }
+    optimizers={
+        "fields": {
+            "optimizer": RAdamOptimizerConfig(lr=5e-4, eps=1e-08),
+            "scheduler": None,
         },
+        "temporal_distortion": {
+            "optimizer": RAdamOptimizerConfig(lr=5e-4, eps=1e-08),
+            "scheduler": None,
+        },
+    },
         viewer=ViewerConfig(num_rays_per_chunk=1 << 15),
         vis="tensorboard",
     ),

@@ -36,6 +36,13 @@ from nerfstudio.model_components.renderers import (
     DepthRenderer,
     RGBRenderer,
 )
+from nerfstudio.model_components.losses import (
+    MSELoss,
+    distortion_loss,
+    interlevel_loss,
+    orientation_loss,
+    pred_normal_loss,
+)
 from nerfstudio.model_components.scene_colliders import AABBBoxCollider, NearFarCollider
 from nerfstudio.models.base_model import Model, ModelConfig
 from nerfstudio.utils import colormaps, colors, misc
@@ -65,7 +72,7 @@ class MCTMipNerfModel(Model):
 
         # setting up fields
         position_encoding = NeRFEncoding(
-            in_dim=3, num_frequencies=16, min_freq_exp=0.0, max_freq_exp=16.0, include_input=True
+            in_dim=3, num_frequencies=24, min_freq_exp=0.0, max_freq_exp=24.0, include_input=True
         )
         direction_encoding = NeRFEncoding(
             in_dim=3, num_frequencies=4, min_freq_exp=0.0, max_freq_exp=4.0, include_input=True
@@ -129,14 +136,26 @@ class MCTMipNerfModel(Model):
         )
         accumulation_fine = self.renderer_accumulation(weights_fine)
         depth_fine = self.renderer_depth(weights_fine, ray_samples_pdf)
+        weights_list=[weights_fine,weights_coarse]
+        ray_samples_list=[ray_samples_pdf,ray_samples_uniform]
+
+        ##debug
+        # deltas_coarse,_=ray_samples_uniform.deltas[0,:].sort()
+        # deltas_fine,_=ray_samples_pdf.deltas[0,:].sort()
+        # min1=deltas_fine.min()
+
+
+
 
         outputs = {
-            "rgb_coarse": rgb_coarse,
-            "rgb_fine": rgb_fine,
+            "rgb_coarse" : rgb_coarse,
+            "rgb_fine" : rgb_fine,
             "accumulation_coarse": accumulation_coarse,
             "accumulation_fine": accumulation_fine,
             "depth_coarse": depth_coarse,
-            "depth_fine": depth_fine
+            "depth_fine" : depth_fine,
+            "weights_list" : weights_list,
+            "ray_samples_list" : ray_samples_list,
         }
         return outputs
 
@@ -144,9 +163,13 @@ class MCTMipNerfModel(Model):
         image = batch["image"].to(self.device)
         rgb_loss_coarse = self.rgb_loss(image, outputs["rgb_coarse"])
         rgb_loss_fine = self.rgb_loss(image, outputs["rgb_fine"])
+        loss_dict={}
+
         # dist_loss_coarse=nerfstudio_distortion_loss(outputs['samples_coarse'],weights=outputs['weights_coarse']).mean()
         # dist_loss_fine=nerfstudio_distortion_loss(outputs['samples_fine'],weights=outputs['weights_fine']).mean()
         loss_dict = {"rgb_loss_coarse": rgb_loss_coarse, "rgb_loss_fine": rgb_loss_fine}
+        if self.training:
+            loss_dict["distortion"] = distortion_loss(outputs["weights_list"], outputs["ray_samples_list"])
         loss_dict = misc.scale_dict(loss_dict, self.config.loss_coefficients)
         return loss_dict
 
