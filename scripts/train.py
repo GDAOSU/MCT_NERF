@@ -232,7 +232,7 @@ def main(config: TrainerConfig) -> None:
 
     launch(
         main_func=train_loop,
-        num_gpus_per_machine=config.machine.num_gpus,
+        num_gpus_per_machine=1,
         num_machines=config.machine.num_machines,
         machine_rank=config.machine.machine_rank,
         dist_url=config.machine.dist_url,

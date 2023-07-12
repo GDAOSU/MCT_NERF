@@ -69,6 +69,7 @@ from nerfstudio.plugins.registry import discover_methods
 method_configs: Dict[str, TrainerConfig] = {}
 descriptions = {
     "nerfacto": "Recommended real-time model tuned for real captures. This model will be continually updated.",
+    "nerfacto-big": "Recommended real-time model tuned for real captures. This model will be continually updated.",
     "depth-nerfacto": "Nerfacto with depth supervision.",
     "volinga": "Real-time rendering model from Volinga. Directly exportable to NVOL format at https://volinga.ai/",
     "instant-ngp": "Implementation of Instant-NGP. Recommended real-time model for unbounded scenes.",
@@ -117,18 +118,24 @@ method_configs["nerfacto"] = TrainerConfig(
     vis="viewer",
 )
 method_configs["nerfacto-big"] = TrainerConfig(
-    method_name="nerfacto",
+    method_name="nerfacto-big",
     steps_per_eval_batch=500,
     steps_per_save=2000,
     max_num_iterations=100000,
     mixed_precision=True,
     pipeline=VanillaPipelineConfig(
         datamanager=VanillaDataManagerConfig(
-            dataparser=NerfstudioDataParserConfig(),
+            dataparser=PhototourismDataParserConfig(
+                data=r'data/dortmund_full_800/dense'
+            ),
             train_num_rays_per_batch=4096,
+            train_num_times_to_repeat_images=100,
+            train_num_images_to_sample_from=500,
+            eval_num_images_to_sample_from=10,
+            eval_num_times_to_repeat_images=100,
             eval_num_rays_per_batch=4096,
             camera_optimizer=CameraOptimizerConfig(
-                mode="SO3xR3", optimizer=RAdamOptimizerConfig(lr=6e-4, eps=1e-8, weight_decay=1e-3)
+                mode="off", optimizer=RAdamOptimizerConfig(lr=6e-4, eps=1e-8, weight_decay=1e-3)
             ),
         ),
         model=NerfactoModelConfig(
@@ -154,7 +161,7 @@ method_configs["nerfacto-big"] = TrainerConfig(
         },
     },
     viewer=ViewerConfig(num_rays_per_chunk=1 << 15),
-    vis="viewer",
+    vis="tensorboard",
 )
 
 method_configs["depth-nerfacto"] = TrainerConfig(

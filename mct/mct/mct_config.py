@@ -8,7 +8,6 @@ from mct.mct_mipnerf import MCTMipNerfModel
 from mct.mct_nerfacto import MCTNerfactoModelConfig
 from mct.mct_neus import MCTNeuSModelConfig
 from mct.mct_neusfacto import MCTNeuSFactoModelConfig
-from nerfstudio.fields.sdf_field import SDFFieldConfig
 from nerfstudio.cameras.camera_optimizers import CameraOptimizerConfig
 from nerfstudio.configs.base_config import ViewerConfig
 from nerfstudio.data.datamanagers.base_datamanager import VanillaDataManagerConfig
@@ -16,18 +15,19 @@ from nerfstudio.data.datamanagers.sdf_datamanager import SDFDataManagerConfig
 from nerfstudio.data.dataparsers.nerfstudio_dataparser import NerfstudioDataParserConfig
 from nerfstudio.data.dataparsers.sdfstudio_dataparser import SDFStudioDataParserConfig
 from nerfstudio.engine.optimizers import AdamOptimizerConfig, RAdamOptimizerConfig
-from nerfstudio.engine.schedulers import ExponentialDecaySchedulerConfig
-from nerfstudio.engine.trainer import TrainerConfig
-from nerfstudio.models.nerfacto import NerfactoModelConfig
-from nerfstudio.models.neus import NeuSModelConfig
-from nerfstudio.models.vanilla_nerf import NeRFModel, VanillaModelConfig
-from nerfstudio.pipelines.base_pipeline import VanillaPipelineConfig
-from nerfstudio.plugins.types import MethodSpecification
 from nerfstudio.engine.schedulers import (
     CosineDecaySchedulerConfig,
     ExponentialDecaySchedulerConfig,
     MultiStepSchedulerConfig,
 )
+from nerfstudio.engine.trainer import TrainerConfig
+from nerfstudio.fields.sdf_field import SDFFieldConfig
+from nerfstudio.models.nerfacto import NerfactoModelConfig
+from nerfstudio.models.neus import NeuSModelConfig
+from nerfstudio.models.vanilla_nerf import NeRFModel, VanillaModelConfig
+from nerfstudio.pipelines.base_pipeline import VanillaPipelineConfig
+from nerfstudio.plugins.types import MethodSpecification
+
 mct_method_nerfacto= MethodSpecification(
     config=TrainerConfig(
         method_name="mct_nerfacto",
@@ -74,8 +74,8 @@ mct_method_nerfacto_big= MethodSpecification(
         method_name="mct_nerfacto_big",
         steps_per_eval_batch=5000,
         steps_per_save=5000,
-        max_num_iterations=30000,
-        steps_per_eval_all_images=10000,
+        max_num_iterations=100000,
+        steps_per_eval_all_images=100000,
         mixed_precision=False,
         pipeline=VanillaPipelineConfig(
             datamanager=VanillaDataManagerConfig(
@@ -92,7 +92,11 @@ mct_method_nerfacto_big= MethodSpecification(
                     scheduler=ExponentialDecaySchedulerConfig(lr_final=6e-6, max_steps=200000),
                 ),
             ),
-            model=MCTNerfactoModelConfig(eval_num_rays_per_chunk=1 << 15),
+            model=MCTNerfactoModelConfig(
+                eval_num_rays_per_chunk=1 << 15,
+                distortion_loss_mult=0,
+                interlevel_loss_mult=0,
+                proposal_initial_sampler='uniform'),
         ),
         optimizers={
             "proposal_networks": {

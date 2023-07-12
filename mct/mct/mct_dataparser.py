@@ -220,6 +220,7 @@ class MCT(DataParser):
         mask_filenames = [mask_filenames[i] for i in indices]
 
         assert len(cameras) == len(image_filenames)
+        has_mask=False
         if has_mask:
             dataparser_outputs = mct_dataparseroutputs.MCTDataParserOutputs(
                 image_filenames=image_filenames,

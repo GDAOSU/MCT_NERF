@@ -70,6 +70,14 @@
       "args": ["depth-nerfacto","--data=data/scannet/scene0241_01/10views"]
     },
     {
+      "name": "Python: train nerfacto-big dortmund-800",
+      "type": "python",
+      "request": "launch",
+      "program": "scripts/train.py",
+      "console": "integratedTerminal",
+      "args": ["nerfacto-big","--data=data/dortmund_full_800/dense"]
+    },
+    {
       "name": "Python: train mct mipnerf",
       "type": "python",
       "request": "launch",

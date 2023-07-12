@@ -1,9 +1,10 @@
-import cv2 as cv
 import glob as glob
-import os
 import math
+import os
 
-COLMAP_PROJECT_PATH = r'J:\degbo\split_image_nerf'
+import cv2 as cv
+
+COLMAP_PROJECT_PATH = r'J:\xuningli\cross-view\ns\nerfstudio\data\dortmund_metashape\dense_offset'
 # TILE_X = 4088
 # TILE_Y = 3066
 TILE_X = 800
@@ -11,9 +12,9 @@ TILE_Y = 800
 
 path_camera_in = COLMAP_PROJECT_PATH + '/sparse/cameras.txt'
 path_image_in = COLMAP_PROJECT_PATH + '/sparse/images.txt'
-path_qin_in = COLMAP_PROJECT_PATH + '/images/pose.qinv2'
+#path_qin_in = COLMAP_PROJECT_PATH + '/images/pose.qinv2'
 path_img_in = COLMAP_PROJECT_PATH + '/images/'
-imglist = glob.glob(COLMAP_PROJECT_PATH + '/images/*.*[!qinv2|!qin]')
+#imglist = glob.glob(COLMAP_PROJECT_PATH + '/images/*.*[!qinv2|!qin]')
 
 if not (os.path.exists(COLMAP_PROJECT_PATH+'/sparse_new')):
     os.mkdir(COLMAP_PROJECT_PATH+'/sparse_new')
@@ -22,7 +23,7 @@ if not (os.path.exists(COLMAP_PROJECT_PATH+'/images_new')):
 
 path_camera_out = COLMAP_PROJECT_PATH + '/sparse_new/cameras.txt'
 path_image_out = COLMAP_PROJECT_PATH + '/sparse_new/images.txt'
-path_qin_out = COLMAP_PROJECT_PATH + '/images_new/pose.qinv2'
+#path_qin_out = COLMAP_PROJECT_PATH + '/images_new/pose.qinv2'
 path_img_out = COLMAP_PROJECT_PATH+'/images_new/'
 
 f_camera_out = open(path_camera_out,'w')
@@ -38,7 +39,9 @@ pond_num = 0
 
 for line in f_camera_in.readlines():
     content = line.split()
-    if content[0] == '#':
+    if len(content)==0:
+        a=1
+    elif content[0] == '#':
         pond_num += 1
         f_camera_out.write(line)
     else:
@@ -90,7 +93,9 @@ img_cam = []
 pond_num = 0
 for line in f_image_in.readlines():
     content = line.split()
-    if content[0] == '#':
+    if len(content)==0:
+        a=1
+    elif content[0] == '#':
         pond_num += 1
         f_image_out.write(line)
     elif pond_num == 4:
