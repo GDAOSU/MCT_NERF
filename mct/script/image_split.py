@@ -4,11 +4,11 @@ import os
 
 import cv2 as cv
 
-COLMAP_PROJECT_PATH = r'J:\xuningli\cross-view\ns\nerfstudio\data\dortmund_metashape\dense_offset'
+COLMAP_PROJECT_PATH = r'J:\xuningli\cross-view\ns\nerfstudio\data\boordaux_metashape\dense'
 # TILE_X = 4088
 # TILE_Y = 3066
-TILE_X = 800
-TILE_Y = 800
+TILE_X = 1600
+TILE_Y = 1600
 
 path_camera_in = COLMAP_PROJECT_PATH + '/sparse/cameras.txt'
 path_image_in = COLMAP_PROJECT_PATH + '/sparse/images.txt'
