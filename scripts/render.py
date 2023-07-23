@@ -31,6 +31,7 @@ from typing_extensions import Literal, assert_never
 from nerfstudio.cameras.camera_paths import (
     get_interpolated_camera_path,
     get_path_from_json,
+    get_path_from_json_transform,
     get_spiral_path,
 )
 from nerfstudio.cameras.cameras import Cameras, CameraType
@@ -52,7 +53,7 @@ def _render_trajectory_video(
     crop_data: Optional[CropData] = None,
     rendered_resolution_scaling_factor: float = 1.0,
     seconds: float = 5.0,
-    output_format: Literal["images", "video"] = "video",
+    output_format: Literal["images", "video"] = "images",
     camera_type: CameraType = CameraType.PERSPECTIVE,
 ) -> None:
     """Helper function to create a video of the spiral trajectory.
@@ -263,7 +264,7 @@ class RenderTrajectory:
     """Path to config YAML file."""
     rendered_output_names: List[str] = field(default_factory=lambda: ["rgb"])
     """Name of the renderer outputs to use. rgb, depth, etc. concatenates them along y axis"""
-    traj: Literal["spiral", "filename", "interpolate"] = "spiral"
+    traj: Literal["spiral", "filename", "interpolate"] = "filename"
     """Trajectory type to render. Select between spiral-shaped trajectory, trajectory loaded from
     a viewer-generated file and interpolated camera paths from the eval dataset."""
     downscale_factor: int = 1
@@ -274,7 +275,7 @@ class RenderTrajectory:
     """Name of the output file."""
     seconds: float = 5.0
     """How long the video should be."""
-    output_format: Literal["images", "video"] = "video"
+    output_format: Literal["images", "video"] = "images"
     """How to save output data."""
     interpolation_steps: int = 10
     """Number of interpolation steps between eval dataset cameras."""
@@ -286,13 +287,15 @@ class RenderTrajectory:
         _, pipeline, _, _ = eval_setup(
             self.load_config,
             eval_num_rays_per_chunk=self.eval_num_rays_per_chunk,
-            test_mode="test" if self.traj in ["spiral", "interpolate"] else "inference",
+            test_mode="test" ,
         )
 
         install_checks.check_ffmpeg_installed()
 
         seconds = self.seconds
         crop_data = None
+        dataparser_scale=pipeline.datamanager.train_dataparser_outputs.dataparser_scale
+        dataparser_transform=pipeline.datamanager.train_dataparser_outputs.dataparser_transform
 
         # TODO(ethan): use camera information from parsing args
         if self.traj == "spiral":
@@ -313,7 +316,7 @@ class RenderTrajectory:
             else:
                 camera_type = CameraType.PERSPECTIVE
             crop_data = get_crop_from_json(camera_path)
-            camera_path = get_path_from_json(camera_path)
+            camera_path = get_path_from_json_transform(camera_path,dataparser_scale,dataparser_transform)
         elif self.traj == "interpolate":
             camera_type = CameraType.PERSPECTIVE
             camera_path = get_interpolated_camera_path(

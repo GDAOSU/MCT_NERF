@@ -221,6 +221,9 @@ class MCT(DataParser):
 
         assert len(cameras) == len(image_filenames)
         has_mask=False
+        transform=torch.zeros((3,4))
+        transform[:3,3]=translation_input2nerf
+        transform[:3,:3]=torch.eye(3)
         if has_mask:
             dataparser_outputs = mct_dataparseroutputs.MCTDataParserOutputs(
                 image_filenames=image_filenames,
@@ -229,7 +232,8 @@ class MCT(DataParser):
                 scene_box=scene_box,
                 sampling_box=sampling_box,
                 dataparser_scale=scale_input2nerf,
-                dataparser_shift=translation_input2nerf
+                dataparser_shift=translation_input2nerf,
+                dataparser_transform=transform
             )
         else:
             dataparser_outputs = mct_dataparseroutputs.MCTDataParserOutputs(
@@ -238,7 +242,8 @@ class MCT(DataParser):
                 scene_box=scene_box, 
                 sampling_box=sampling_box,
                 dataparser_scale=scale_input2nerf,
-                dataparser_shift=translation_input2nerf
+                dataparser_shift=translation_input2nerf,
+                dataparser_transform=transform
             )
 
         return dataparser_outputs

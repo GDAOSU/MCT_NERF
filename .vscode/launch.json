@@ -24,7 +24,7 @@
       "request": "launch",
       "program": "${file}",
       "console": "integratedTerminal",
-      "justMyCode": true
+      "justMyCode": false
     },
     {
       "name": "Python: train",
@@ -84,7 +84,12 @@
       "program": "scripts/train.py",
       "console": "integratedTerminal",
       "env":{"CUDA_VISIBLE_DEVICES":"0"},
-      "args": ["mct_mipnerf","--data=data/dortmund_metashape/block_center/0"]
+      "args": ["mct_mipnerf","--data=data/dortmund_metashape/block_center/0",
+               "--output-dir=outputs/dortmund_64blocks",
+               "--experiment-name=0",
+               "--timestamp=0",
+               "--max-num-iterations=100000"],
+      "justMyCode": false
     },
     {
       "name": "Python: train mct nerf",
@@ -127,6 +132,19 @@
     ]
     },
     {
+      "name": "Python: render rgb mct mipnerf",
+      "type": "python",
+      "request": "launch",
+      "program": "scripts/render.py",
+      "console": "integratedTerminal",
+      "args": ["--camera_path_filename=data/dortmund_metashape/dense/camera_path.json",
+               "--load-config","outputs/dortmund_metashape_blocks64/0/mct_mipnerf/0/config.yml",
+               "--output-path","renders/dortmund_test/",
+               "--rendered-output-names=rgb_fine"
+        ],
+        "justMyCode":false
+    },
+    {
       "name": "Python: render pointcloud all mct mipnerf boordaux",
       "type": "python",
       "request": "launch",
@@ -159,7 +177,7 @@
       "program": "mct/script/exporter_mct.py",
       "console": "integratedTerminal",
       "env":{"CUDA_VISIBLE_DEVICES":"1"},
-      "args": ["depth","--load-config","outputs/0/mct_mipnerf/2023-04-29_122251/config.yml","--output-dir","renders/dortmund_block_center_mipnerf/",
+      "args": ["depth","--load-config","outputs/dortmund_metashape_blocks64/0/mct_mipnerf/0/config.yml","--output-dir","renders/dortmund_blocks64/",
       "--depth-output-name","depth_fine",
     ]
     },
