@@ -163,12 +163,12 @@
       "request": "launch",
       "program": "mct/script/exporter_mct.py",
       "console": "integratedTerminal",
-      "env":{"CUDA_VISIBLE_DEVICES":"0"},
-      "args": ["pointcloudall","--load-config","outputs/reflectence/mct_mipnerf/2023-05-21_002738/config.yml",
-      "--output-dir","pcd/dortmund_reflectence_new",
+      "args": ["pointcloudall","--load-config","outputs/dortmund_metashape_blocks64/0/mct_mipnerf/0/config.yml",
+      "--output-dir","pcd/test",
       "--rgb-output-name","rgb_fine","--depth-output-name",
       "depth_fine","--offx","393500","--offy","5708000"
-    ]
+    ],
+    "justMyCode": false
     },
     {
       "name": "Python: render depth mct mipnerf",
