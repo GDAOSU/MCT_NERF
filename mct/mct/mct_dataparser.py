@@ -52,7 +52,7 @@ class MCTDataParserConfig(DataParserConfig):
     """How much to scale the camera origins by."""
     alpha_color: str = "black"
     """alpha color of background"""
-    train_split_percentage: float = 0.9
+    train_split_percentage: float = 0.99
     """The percent of images to use for training. The remaining images are for eval."""
     scene_scale: float = 1.0
     """How much to scale the region of interest by."""
@@ -62,6 +62,7 @@ class MCTDataParserConfig(DataParserConfig):
     """Whether to automatically scale the poses to fit in +/- 1 bounding box."""
     center_poses: bool = False
     """Whether to center the poses."""
+    has_mask: bool=True
 
 @dataclass
 class MCT(DataParser):
@@ -220,7 +221,7 @@ class MCT(DataParser):
         mask_filenames = [mask_filenames[i] for i in indices]
 
         assert len(cameras) == len(image_filenames)
-        has_mask=False
+        has_mask=self.config.has_mask
         transform=torch.zeros((3,4))
         transform[:3,3]=translation_input2nerf
         transform[:3,:3]=torch.eye(3)

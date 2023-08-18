@@ -21,9 +21,10 @@ Export utils such as structs, point cloud generation, and rendering code.
 from __future__ import annotations
 
 import sys
+from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
-from collections import defaultdict
+
 import numpy as np
 import open3d as o3d
 import pymeshlab
@@ -113,10 +114,11 @@ def generate_depth(
     rgbs = []
     normals = []
     num_images = len(pipeline.datamanager.fixed_indices_eval_dataloader)
-    from PIL import Image
     import os
-    import numpy as np
+
     import cv2
+    import numpy as np
+    from PIL import Image
     with torch.no_grad():
         cnt=0
         for camera_ray_bundle, batch in pipeline.datamanager.fixed_indices_eval_dataloader:
@@ -177,10 +179,11 @@ def generate_point_cloud_all(
     rgbs = []
     normals = []
     num_images = len(pipeline.datamanager.fixed_indices_eval_dataloader)
-    from PIL import Image
     import os
-    import numpy as np
+
     import cv2
+    import numpy as np
+    from PIL import Image
     with torch.no_grad():
         cnt=0
         for camera_ray_bundle, batch in pipeline.datamanager.fixed_indices_eval_dataloader:
@@ -431,6 +434,110 @@ def render_trajectory(
             images.append(outputs[rgb_output_name].cpu().numpy())
             depths.append(outputs[depth_output_name].cpu().numpy())
     return images, depths
+
+def generate_point_cloud_all_mct(
+    pipeline: Pipeline,
+    rgb_output_name: str = "rgb_fine",
+    depth_output_name: str = "depth_fine",
+    output_dir: str="",
+    num_pts: int=1000000,
+    shiftx: float=0.0,
+    shifty: float=0.0,
+    shiftz: float=0.0,
+    scale:float=0.0
+
+) -> o3d.geometry.PointCloud:
+    """Generate a point cloud from a nerf.
+
+    Args:
+        pipeline: Pipeline to evaluate with.
+        num_points: Number of points to generate. May result in less if outlier removal is used.
+        remove_outliers: Whether to remove outliers.
+        estimate_normals: Whether to estimate normals.
+        rgb_output_name: Name of the RGB output.
+        depth_output_name: Name of the depth output.
+        normal_output_name: Name of the normal output.
+        use_bounding_box: Whether to use a bounding box to sample points.
+        bounding_box_min: Minimum of the bounding box.
+        bounding_box_max: Maximum of the bounding box.
+        std_ratio: Threshold based on STD of the average distances across the point cloud to remove outliers.
+
+    Returns:
+        Point cloud.
+    """
+
+    # pylint: disable=too-many-statements
+    import os
+
+    import cv2
+    import numpy as np
+    from PIL import Image
+    num_imgs=len(pipeline.datamanager.fixed_indices_eval_dataloader)
+    num_pts_per_img=int(num_pts/num_imgs)
+    skip_image=2
+    with torch.no_grad():
+        cnt=0
+        points=[]
+        rgbs=[]
+        for camera_ray_bundle, batch in pipeline.datamanager.fixed_indices_eval_dataloader:
+            if batch["image_idx"]%skip_image!=0:
+                continue
+            # time this the following line
+            camera_ray_bundle=camera_ray_bundle.to(torch.device("cpu"))
+            height, width = camera_ray_bundle.shape
+            pt_name=str(cnt)+"_.ply"
+            pt_path=str(output_dir / pt_name)
+            if os.path.exists(pt_path):
+                continue
+
+            num_rays_per_chunk = pipeline.model.config.eval_num_rays_per_chunk
+            image_height, image_width = camera_ray_bundle.origins.shape[:2]
+            num_rays = len(camera_ray_bundle)
+            depth_list = []
+            rgb_list=[]
+            for i in range(0, num_rays, num_rays_per_chunk):
+                start_idx = i
+                end_idx = i + num_rays_per_chunk
+                ray_bundle = camera_ray_bundle.get_row_major_sliced_ray_bundle(start_idx, end_idx)
+                outputs = pipeline.model.forward(ray_bundle=ray_bundle.to(pipeline.device))
+                depth_list.append(outputs['depth_fine'].cpu())
+                rgb_list.append(outputs['rgb_fine'].cpu())
+
+            depth=torch.cat(depth_list).view(image_height, image_width, -1)
+            rgb=torch.cat(rgb_list).view(image_height, image_width, -1)
+
+            point=camera_ray_bundle.origins+camera_ray_bundle.directions*depth
+            point=point.view(-1,3)
+            rgb=rgb.view(-1,3)
+
+            perm=torch.randperm(height*width)
+            indices=perm[:num_pts_per_img]
+            point=point[indices,:]
+            rgb=rgb[indices,:]
+            points.append(point)
+            rgbs.append(rgb)
+        points=torch.cat(points)
+        rgbs=torch.cat(rgbs)
+        return points,rgbs
+        points=torch.cat(points)
+        rgbs=torch.cat(rgbs)
+        pcd = o3d.geometry.PointCloud()
+        pcd.points = o3d.utility.Vector3dVector(points.double().numpy())
+        pcd.colors = o3d.utility.Vector3dVector(rgbs.double().numpy())
+        
+        shift=np.array([shiftx,shifty,shiftz])
+        pcd.scale(scale,center=np.zeros(3))
+        pcd.translate(shift)
+
+        tpcd = o3d.t.geometry.PointCloud.from_legacy(pcd)
+        # The legacy PLY writer converts colors to UInt8,
+        # let us do the same to save space.
+        tpcd.point.colors = (tpcd.point.colors * 255).to(o3d.core.Dtype.UInt8)
+
+        #o3d.t.io.write_point_cloud(str(output_dir / pt_name), tpcd)
+        return tpcd
+
+
 
 
 def collect_camera_poses_for_dataset(dataset: Optional[InputDataset]) -> List[Dict[str, Any]]:

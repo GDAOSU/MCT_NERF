@@ -15,16 +15,19 @@ from nerfstudio.pipelines.base_pipeline import Pipeline
 from nerfstudio.utils.eval_utils import eval_setup
 
 
-def generate_pcd(trained_model_dir,num_pts,out_dir):
+def generate_pcd(trained_model_dir,timestamp,num_pts,out_dir):
     trained_blocks=glob.glob(os.path.join(trained_model_dir,"*"))
     num_blks=len(trained_blocks)
     num_pts_per_blk=int(num_pts/num_blks)
+    pcd_pts_list=[]
+    pcd_rgb_list=[]
     for id,block in enumerate(trained_blocks):
-        _, pipeline, _, _ = eval_setup(Path(os.path.join(block,"mct_mipnerf/0/config.yml")),1024,test_mode='all')
+        _, pipeline, _, _ = eval_setup(Path(os.path.join(block,"mct_mipnerf/"+timestamp+"/config.yml")),1024,test_mode='all')
 
         # Increase the batchsize to speed up the evaluation.
-        pipeline.datamanager.train_pixel_sampler.num_rays_per_batch = 1024
-
+        pipeline.datamanager.train_pixel_sampler.num_rays_per_batch = 10240
+        pipeline.model.config.eval_num_rays_per_chunk=10000
+        
         scale_input2nerf=pipeline.datamanager.train_dataparser_outputs.dataparser_scale
         shift_input2nerf=pipeline.datamanager.train_dataparser_outputs.dataparser_shift
         shift=-shift_input2nerf.numpy()
@@ -32,7 +35,7 @@ def generate_pcd(trained_model_dir,num_pts,out_dir):
         scale=(1/scale_input2nerf).numpy()
         #offset=np.array([-self.offx,-self.offy,-self.offz])
         #shift+=offset
-        pcd = generate_point_cloud_all_mct(
+        points,rgbs = generate_point_cloud_all_mct(
             pipeline=pipeline,
             rgb_output_name="rgb_fine",
             depth_output_name="depth_fine",
@@ -43,12 +46,32 @@ def generate_pcd(trained_model_dir,num_pts,out_dir):
             shiftz=shift[2],
             scale=scale
         )
-        o3d.t.io.write_point_cloud(os.path.join(out_dir, str(id)+".ply"), pcd)
-        torch.cuda.empty_cache()
+        points*=scale
+        points+=shift.reshape(1,3)
+        pcd_pts_list.append(points)
+        pcd_rgb_list.append(rgbs)
+
+        pcd = o3d.geometry.PointCloud()
+        pcd.points = o3d.utility.Vector3dVector(points.numpy())
+        pcd.colors = o3d.utility.Vector3dVector(rgbs.numpy())
+        tpcd = o3d.t.geometry.PointCloud.from_legacy(pcd)
+        tpcd.point.colors = (tpcd.point.colors * 255).to(o3d.core.Dtype.UInt8)
+        o3d.t.io.write_point_cloud(os.path.join(out_dir, "{}.ply".format(id)), tpcd)
+    points=torch.cat(pcd_pts_list)
+    rgbs=torch.cat(pcd_rgb_list)
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(points.double().numpy())
+    pcd.colors = o3d.utility.Vector3dVector(rgbs.double().numpy())
+    tpcd = o3d.t.geometry.PointCloud.from_legacy(pcd)
+    # The legacy PLY writer converts colors to UInt8,
+    # let us do the same to save space.
+    tpcd.point.colors = (tpcd.point.colors * 255).to(o3d.core.Dtype.UInt8)
+    o3d.t.io.write_point_cloud(os.path.join(out_dir, "pcd.ply"), tpcd)
+    torch.cuda.empty_cache()
                     
 
 
-generate_pcd(r'J:\xuningli\cross-view\ns\nerfstudio\outputs\dortmund_metashape_blocks64',10000000,
-             r'J:\xuningli\cross-view\ns\nerfstudio\pcd\dortmund_blocks16')
+generate_pcd(r'J:\xuningli\cross-view\ns\nerfstudio\outputs\dortmund_metashape_blocks_2_16','30k',10000000,
+             r'J:\xuningli\cross-view\ns\nerfstudio\pcd\dortmund_dense2_blocks16')
 
 
