@@ -605,9 +605,17 @@ def split_block_projection_new(in_dir, num_tiles=2, out_dir="", scene_bbox_path=
 
 
 #GEOMVS
-in_dir=r'J:\xuningli\cross-view\ns\nerfstudio\data\geomvs_original\dense'
-out_dir=r'J:\xuningli\cross-view\ns\nerfstudio\data\geomvs_original\test1'
+# in_dir=r'J:\xuningli\cross-view\ns\nerfstudio\data\geomvs_original\dense'
+# out_dir=r'J:\xuningli\cross-view\ns\nerfstudio\data\geomvs_original\test1'
+# num_split=4
+# scene_box_path=r'J:\xuningli\cross-view\ns\nerfstudio\data\geomvs_original\test1\scene_bbox.txt'
+# #split_block_projection(in_dir, num_split, out_dir, scene_box_path)
+# split_block_projection_new(in_dir, num_split, out_dir, scene_box_path)
+
+
+in_dir=r'J:\xuningli\cross-view\ns\nerfstudio\data\geomvs\dense'
+out_dir=r'J:\xuningli\cross-view\ns\nerfstudio\data\geomvs\test1'
 num_split=4
-scene_box_path=r'J:\xuningli\cross-view\ns\nerfstudio\data\geomvs_original\test1\scene_bbox.txt'
+scene_box_path=r'J:\xuningli\cross-view\ns\nerfstudio\data\geomvs\test1\scene_bbox.txt'
 #split_block_projection(in_dir, num_split, out_dir, scene_box_path)
 split_block_projection_new(in_dir, num_split, out_dir, scene_box_path)

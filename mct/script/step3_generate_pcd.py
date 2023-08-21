@@ -14,6 +14,10 @@ from nerfstudio.exporter.exporter_utils import generate_point_cloud_all_mct
 from nerfstudio.pipelines.base_pipeline import Pipeline
 from nerfstudio.utils.eval_utils import eval_setup
 
+### generate the dense point cloud from the trained model
+## trained_model_dir: contraining the trained model
+## timestamp: "mct_mipnerf/"+timestamp+"/config.yml"
+## num_pts: #pts for the whole point clouds, the #pts for each block will be equally divided
 
 def generate_pcd(trained_model_dir,timestamp,num_pts,out_dir):
     trained_blocks=glob.glob(os.path.join(trained_model_dir,"*"))

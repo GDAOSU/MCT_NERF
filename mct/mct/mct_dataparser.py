@@ -54,7 +54,7 @@ class MCTDataParserConfig(DataParserConfig):
     """alpha color of background"""
     train_split_percentage: float = 0.99
     """The percent of images to use for training. The remaining images are for eval."""
-    scene_scale: float = 1.0
+    scene_scale: float = 2.0
     """How much to scale the region of interest by."""
     orientation_method: Literal["pca", "up", "none"] = "none"
     """The method to use for orientation."""
@@ -172,7 +172,7 @@ class MCT(DataParser):
         ) = mct_camera_utils.center_scale_poses_and_compute_frustum(poses, aoi_bbox)
 
         # make the scene_bbox a little bit larger
-        scene_bbox_expand_scale = 2
+        scene_bbox_expand_scale = self.config.scene_scale
         xyz_length = xyz_max - xyz_min
         scene_bbox_expand_margin = xyz_length * (scene_bbox_expand_scale - 1) / 2
         xyz_max[0] += scene_bbox_expand_margin[0]

@@ -97,7 +97,10 @@ def merge_rendered_view_each_block(height,width,rendered_each_blocks,rendered_in
         out_img[inter_bbox[2]:inter_bbox[3]+1,inter_bbox[0]:inter_bbox[1]+1,:]=img
     return out_img
 
-
+## render the images 
+##data_dir: multi-camera tiling datasets
+##trained_model_dir and timestamp: refer to step3_generate_pcd.py/generate_pcd()
+#camera_path_file: nerfstudio format, the pose should be in nerfstudio coordinates (not colmap coordiate). Refer to colmap_to_nerf.py/colmap2nerfcamerapath_intrinsic()
 def render_novel_view_mct(data_dir,trained_model_dir,timestamp,camera_path_file, out_dir):
 
     data_block_files=glob.glob(os.path.join(data_dir,"*"))
