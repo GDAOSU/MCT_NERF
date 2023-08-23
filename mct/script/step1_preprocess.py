@@ -70,7 +70,7 @@ def scenebbox_image_intersect(scene_aabb, img_pose, img_K, width, height):
         return False, intersect_bbox
 
 
-def split_bbox(scene_bbox, num_tiles, ground_range, expand_m=3):
+def split_bbox(scene_bbox, num_tiles, expand_m=3):
     tiles = []
     x_len = scene_bbox[3] - scene_bbox[0]
     y_len = scene_bbox[4] - scene_bbox[1]
@@ -85,7 +85,7 @@ def split_bbox(scene_bbox, num_tiles, ground_range, expand_m=3):
             xmax = (col + 1) * x_tile_len + scene_bbox[0] + expand_x
             ymin = row * y_tile_len + scene_bbox[1] - expand_y
             ymax = (row + 1) * y_tile_len + scene_bbox[1] + expand_y
-            tiles.append([xmin, ymin, ground_range[0], xmax, ymax, ground_range[1]])
+            tiles.append([xmin, ymin, scene_bbox[2], xmax, ymax, scene_bbox[5]])
     return tiles
 
 
@@ -250,9 +250,10 @@ def split_block_projection_new(in_dir, num_tiles=2, out_dir="", scene_bbox_path=
         tile_bbox = list(np.loadtxt(scene_bbox_path))
         ground_range[0]=tile_bbox[2]
         ground_range[1]=tile_bbox[5]
-        tiles_bbox.append(tile_bbox)
+        #tiles_bbox.append(tile_bbox)
+        tiles_bbox=split_bbox(np.array(tile_bbox),num_tiles)
     else:
-        tiles_bbox = split_bbox(scene_bbox, num_tiles,ground_range)
+        tiles_bbox = split_bbox(scene_bbox, num_tiles)
     poses = []
     heights = []
     widths = []
@@ -418,10 +419,27 @@ def split_block_projection_new(in_dir, num_tiles=2, out_dir="", scene_bbox_path=
 # #split_block_projection(in_dir, num_split, out_dir, scene_box_path)
 # split_block_projection_new(in_dir, num_split, out_dir, scene_box_path)
 
+#dortmund blocks36
+# in_dir=r'J:\xuningli\cross-view\ns\nerfstudio\data\dortmund_metashape\dense'
+# out_dir=r'J:\xuningli\cross-view\ns\nerfstudio\data\dortmund_metashape\blocks_2_36'
+# num_split=6
+# scene_box_path=r''
+# #split_block_projection(in_dir, num_split, out_dir, scene_box_path)
+# split_block_projection_new(in_dir, num_split, out_dir, scene_box_path)
+
 #geomvs
+# in_dir=r'J:\xuningli\cross-view\ns\nerfstudio\data\geomvs_original\dense'
+# out_dir=r'J:\xuningli\cross-view\ns\nerfstudio\data\geomvs_original\blocks_16'
+# num_split=4
+# scene_box_path=r''
+# #split_block_projection(in_dir, num_split, out_dir, scene_box_path)
+# split_block_projection_new(in_dir, num_split, out_dir, scene_box_path)
+
+
+#geomvs test2
 in_dir=r'J:\xuningli\cross-view\ns\nerfstudio\data\geomvs_original\dense'
-out_dir=r'J:\xuningli\cross-view\ns\nerfstudio\data\geomvs_original\blocks_16'
-num_split=4
-scene_box_path=r''
+out_dir=r'J:\xuningli\cross-view\ns\nerfstudio\data\geomvs_original\test2'
+num_split=2
+scene_box_path=r'J:\xuningli\cross-view\ns\nerfstudio\data\geomvs_original\test2\scene_bbox.txt'
 #split_block_projection(in_dir, num_split, out_dir, scene_box_path)
 split_block_projection_new(in_dir, num_split, out_dir, scene_box_path)
