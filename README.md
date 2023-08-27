@@ -114,6 +114,17 @@ pip install ninja git+https://github.com/NVlabs/tiny-cuda-nn/#subdirectory=bindi
 See [Dependencies](https://github.com/nerfstudio-project/nerfstudio/blob/main/docs/quickstart/installation.md#dependencies)
 in the Installation documentation for more.
 
+Tips for Tiny-cuda-nn in Ubuntu, please make sure the versions of GCC/G++, CUDA, NVCC and PyTorch are correct! If your GCC/G++ version lower than 8.5 please run
+```bash
+sudo apt-get install gcc-9
+sudo apt-get install g++-9
+```
+tiny-cuda-nn installation
+```bash
+pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+conda install -c "nvidia/label/cuda-11.8.0" cuda-toolkit
+pip install git+https://github.com/NVlabs/tiny-cuda-nn/#subdirectory=bindings/torch
+```
 ### Installing nerfstudio
 
 Easy option:
