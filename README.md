@@ -7,9 +7,9 @@ Neural Radiance Fields (NeRF) have recently emerged as a novel and effective 3D 
 ![image](https://github.com/GDAOSU/MCT_NERF/assets/32317924/b7b54d3b-4732-4a2e-ba2a-cf1953945a96)
 
 # Updates and To Do 
--[] Release the sample datasets, pretrained models   
--[] Speed up the rendering RGB,Depth,point cloud, mesh  
--[x][08/30/2023] Release the code.  
+- [] Release the sample datasets, pretrained models   
+- [] Speed up the rendering RGB,Depth,point cloud, mesh  
+- [x][08/30/2023] Release the code.  
 
 
 # Quickstart
